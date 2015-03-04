@@ -9,6 +9,11 @@ HDRS= $(shell ls *.h)
 SRCS= $(shell ls *.cpp)
 OBJS= $(patsubst %.cpp, %.o, $(SRCS))
 
+LINUX_LIBS= -lXext -lX11 -lGL -lGLU -lglut
+MAC_LIBS= -framework GLUT -framework OpenGL
+LIBS=$(shell [ -e /Volumes/Macintosh\ HD ] && echo $(MAC_LIBS) || echo $(LINUX_LIBS))
+CFLAGS+=$(shell [ -e /Volumes/Macintosh\ HD ] && echo -DMACINTOSH -Wno-deprecated-declarations)
+
 all: $(PROD)
 
 $(OBJS): %.o: %.cpp

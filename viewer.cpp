@@ -3,58 +3,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <GL/glut.h> /* for linux */
-
-GLfloat cx = 0.707f, cy = 0.707f, cz = 0.707f, angleXZ = 0.0f, angleY = 0.0f;
-
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
+#include <vector>
+#include <string>
+#include <iostream>
+#ifdef MACINTOSH
+#include <OpenGL/gl.h>
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+#include "geom.h"
+#include "loader.h"
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(cx,cy,cz,0,0,0,0,1,0);
     glutSwapBuffers();
 }
-
-
-// void displayInverse() {
-//     currentTime = glutGet(GLUT_ELAPSED_TIME);
-//     elapsedTime = currentTime - previousTime;
-//     if(elapsedTime > 60) {
-//         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//         glLoadIdentity();
-//         gluLookAt(cx,cy,cz,0,0,0,0,1,0);
-//         glBegin(GL_QUADS);
-//         divide_cube_i(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], n+1);
-//         glEnd();
-//         glutSwapBuffers();
-//     }
-// }
-
-// void displayBoth() {
-//     currentTime = glutGet(GLUT_ELAPSED_TIME);
-//     elapsedTime = currentTime - previousTime;
-//     if(elapsedTime > 60) {
-//         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//         glMatrixMode(GL_MODELVIEW);
-
-//         glLoadIdentity();
-//         gluLookAt(cx,cy,cz,0,0,0,0,1,0);
-//         glTranslatef(-1.0f, 0.0f, 0.0f);
-
-//         glBegin(GL_QUADS);
-//         divide_cube(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], n);
-//         glEnd();
-
-//         glLoadIdentity();
-//         gluLookAt(cx,cy,cz,0,0,0,0,1,0);
-//         glTranslatef(1.0f, 0.0f, 0.0f);
-
-//         glBegin(GL_QUADS);
-//         divide_cube_i(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], n+1);
-//         glEnd();
-//          glutSwapBuffers();
-//     }
-// }
 
 void myReshape(int w, int h) {
     glViewport(0, 0, w, h);
@@ -65,10 +33,6 @@ void myReshape(int w, int h) {
     glutPostRedisplay();
 }
 
-// void timer(int value) {
-// glutPostRedisplay();      // Post re-paint request to activate display()
-// glutTimerFunc(refreshMills, timer, 0); // next timer call milliseconds later
-// }
 
 void SelectFromMenu(int idCommand) {
     switch (idCommand)
@@ -96,9 +60,6 @@ void SelectFromMenu(int idCommand) {
 int BuildPopupMenu (void) {
   int menu;
   menu = glutCreateMenu (SelectFromMenu);
-  // glutAddMenuEntry ("Menger Sponge", 0);
-  // glutAddMenuEntry ("Inverse Menger Sponge", 1);
-  // glutAddMenuEntry ("Both", 2);
   glutAddMenuEntry ("Exit", 3);
 
   return menu;
@@ -116,7 +77,7 @@ void MouseButton(int button, int state, int x, int y) {
     //     mouseY = y;
     // }
     // else {
-    //     middle_pressed = 0;
+    //    iddle_pressed = 0;
     // }
 }
 
@@ -133,12 +94,42 @@ void MouseMove(int x, int y) {
     // }
 }
 
+int getdir (string dir, vector<string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL) {
+        cout << "Error(" << errno << ") opening " << dir << endl;
+        return errno;
+    }
+
+    while ((dirp = readdir(dp)) != NULL) {
+        if(string(dirp->d_name).find(".obj") < 100)
+            files.push_back(string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
+    Trimesh *t;
+    TrimeshLoader tl;
+    tl.loadOBJ("models/cactus.obj", t);
+
+    // string dir = string(argv[1]);
+    // vector<string> files = vector<string>();
+
+    // getdir(dir,files);
+
+    // for (unsigned int i = 0;i < files.size();i++) {
+    //     cout << files[i] << endl;
+    // }
+    
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(500, 500);
-    glutCreateWindow("3D Gasket");
+    glutCreateWindow("3D Model Viewer");
     glutReshapeFunc(myReshape);
     // glutMouseFunc(MouseButton);
     // glutMotionFunc(MouseMove);
@@ -148,8 +139,14 @@ int main(int argc, char **argv)
     // glutTimerFunc(0, timer, 0);
     BuildPopupMenu ();
     glutAttachMenu (GLUT_RIGHT_BUTTON);
-
     glClearColor(0.0,0.0,0.0,1.0);
-
     glutMainLoop();
 }
+
+
+
+
+
+
+
+
