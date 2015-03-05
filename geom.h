@@ -22,13 +22,30 @@ struct Face
 
 class Trimesh
 {
-    list<Vertex> v_list;
-    list<Face> f_list;
-
     public:
+        list<Vertex> v_list;
+        list<Face> f_list;
+        float minx, miny, minz;
+        float maxx, maxy, maxz;
+
         void addVertex(float data[])
         {
             Vertex v = {data[0],data[1],data[2]};
+
+            if(data[0] < minx)
+                minx = data[0];
+            if(data[1] < miny)
+                miny = data[1];
+            if(data[2] < minz)
+                minz = data[2];
+
+            if(data[0] > maxx)
+                maxx = data[0];
+            if(data[1] > maxy)
+                maxy = data[1];
+            if(data[2] > maxz)
+                maxz = data[2];
+
             v_list.push_back(v);
         }
 

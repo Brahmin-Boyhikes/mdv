@@ -53,7 +53,6 @@ class TrimeshLoader
 			while(!ifs.eof())
 			{
 				ifs.getline(line,LINE_SIZE);
-				cout << line << endl;
 				tok=strtok(line,TOK_SEPS);
 				TokenPair * ptokp=tokenMatch(tok);
 				if(ptokp)

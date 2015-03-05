@@ -1,7 +1,10 @@
 /* This system will read input files in .obj format, build scene graphs using them, and render the results. */
+/* Display at most 10 objects */
+/* arg is folder name in the same directory of the out file */
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -18,80 +21,85 @@
 #include "geom.h"
 #include "loader.h"
 
+
+#define ZOOM_VELOCITY 0.2f
+#define ANGLE_VELOCITY 0.5f
+#define RADIAN 0.0174532925f
+
+string dir;
+Trimesh t;
+TrimeshLoader tl;
+
+int currentX = 0, currentY = 0;
+
+float viewZ = -3.0f, viewX = 0.0f, viewY = 0.0f, viewR = 3;
+int enableZoom = 0, enableMove = 0;
+float phi = 0, theta = 0;
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW);
+
     glLoadIdentity();
+
+    gluLookAt(viewX, viewY, viewZ, 0, 0, 0, 0, 1, 0);
+
+    glTranslatef(-(t.maxx + t.minx)/2.0f, -(t.maxy + t.miny)/2.0f, -(t.maxz + t.minz)/2.0f);
+
+    glBegin(GL_POINTS);
+    for (list<Vertex>::const_iterator it = t.v_list.begin(); it != t.v_list.end(); ++it){
+        glVertex3f((*it).x, (*it).y, (*it).z);
+    }
+
+    glEnd();
     glutSwapBuffers();
 }
 
-void myReshape(int w, int h) {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-2.0f, 2.0f, -2.0f, 2.0f, -4.0f, 4.0f);
-    glMatrixMode(GL_MODELVIEW);
-    glutPostRedisplay();
-}
+void reshape(int width, int height) {
+      // Compute aspect ratio of the new window
+   if (height == 0) height = 1;                // To prevent divide by 0
+   GLfloat aspect = (GLfloat)width / (GLfloat)height;
 
+   // Set the viewport to cover the new window
+   glViewport(0, 0, width, height);
 
-void SelectFromMenu(int idCommand) {
-    switch (idCommand)
-    {
-    // case 0:
-    //     glutDisplayFunc(display);
-    //     glutIdleFunc(display);
-    //   break;
-    // case 1:
-    //     glutDisplayFunc(displayInverse);
-    //     glutIdleFunc(displayInverse);
-    //     break;
-    // case 2:
-    //     glutDisplayFunc(displayBoth);
-    //     glutIdleFunc(displayBoth);
-    //     break;
-    case 3:
-        exit (0);
-        break;
-    }
-  // Almost any menu selection requires a redraw
-  glutPostRedisplay();
-}
-
-int BuildPopupMenu (void) {
-  int menu;
-  menu = glutCreateMenu (SelectFromMenu);
-  glutAddMenuEntry ("Exit", 3);
-
-  return menu;
+   // Set the aspect ratio of the clipping volume to match the viewport
+   glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
+   glLoadIdentity();             // Reset
+   // Enable perspective projection with fovy, aspect, zNear and zFar
+   gluPerspective(45.0f, aspect, 0.1f, 100.0f);
 }
 
 void MouseButton(int button, int state, int x, int y) {
-    // state = 0 pressed
-    //       = 1 released
-    // if (button == GLUT_LEFT_BUTTON && state == 0) {
-    //     n = (n + 1) % 4;
-    // }
-    // if (button == GLUT_MIDDLE_BUTTON) {
-    //     middle_pressed = 1;
-    //     mouseX = x;
-    //     mouseY = y;
-    // }
-    // else {
-    //    iddle_pressed = 0;
-    // }
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        // enableZoom = 1; // For Right Click
+        enableMove = 1; // For Left Click
+    }
+    currentX = x;
+    currentY = y;
 }
 
 void MouseMove(int x, int y) {
-    // if(middle_pressed) {
-    //     if(mouseX < x){
-    //         angleXZ += 0.05; 
-    //     }
-    //     else if(mouseX > x){
-    //         angleXZ -= 0.05;
-    //     }
-    //     cx = sin(angleXZ);
-    //     cz = -1 * cos(angleXZ);
-    // }
+    if(enableZoom)
+        viewR -= (currentY < y) ? ZOOM_VELOCITY : -ZOOM_VELOCITY;
+
+    if(enableMove){
+        phi += (currentY -y ) * ANGLE_VELOCITY;
+        theta += (currentX -x) * ANGLE_VELOCITY;
+
+        phi = fmod(phi, 360.0);
+        theta = fmod(theta, 360.0);
+
+    }
+
+    viewX = viewR * cosf(phi*RADIAN) * sinf(theta*RADIAN);
+    viewY = viewR * sinf(phi*RADIAN) * sinf(theta*RADIAN);
+    viewZ = viewR * cosf(theta*RADIAN);
+
+    currentX = x;
+    currentY = y;
+    glutPostRedisplay();
 }
 
 int getdir (string dir, vector<string> &files)
@@ -111,30 +119,90 @@ int getdir (string dir, vector<string> &files)
     return 0;
 }
 
+
+void SelectFromMenu(int idCommand) {
+
+    t.v_list.clear();
+    t.f_list.clear();
+    t.minx = t.miny = t.minz = t.maxx = t.maxy = t.maxz = 0;
+
+    vector<string> files = vector<string>();
+    getdir(dir,files);
+
+    switch (idCommand)
+    {
+        case 0:
+        tl.loadOBJ(string(dir+"/"+files[0]).c_str(), &t);
+        break;
+        case 1:
+        tl.loadOBJ(string(dir+"/"+files[1]).c_str(), &t);
+        break;
+        case 2:
+        tl.loadOBJ(string(dir+"/"+files[2]).c_str(), &t);
+        break;
+        case 3:
+        tl.loadOBJ(string(dir+"/"+files[3]).c_str(), &t);
+        break;
+        case 4:
+        tl.loadOBJ(string(dir+"/"+files[4]).c_str(), &t);
+        break;
+        case 5:
+        tl.loadOBJ(string(dir+"/"+files[5]).c_str(), &t);
+        break;
+        case 6:
+        tl.loadOBJ(string(dir+"/"+files[6]).c_str(), &t);
+        break;
+        case 7:
+        tl.loadOBJ(string(dir+"/"+files[7]).c_str(), &t);
+        break;
+        case 8:
+        tl.loadOBJ(string(dir+"/"+files[8]).c_str(), &t);
+        break;
+        case 9:
+        tl.loadOBJ(string(dir+"/"+files[9]).c_str(), &t);
+        break;
+        case 100:
+        exit (0);
+        break;
+    }
+    // Almost any menu selection requires a redraw
+    glutPostRedisplay();
+}
+
+int BuildPopupMenu (void) {
+    int menu, submenu;
+    vector<string> files = vector<string>();
+
+    submenu = glutCreateMenu (SelectFromMenu);
+    getdir(dir,files);
+
+    int options = files.size();
+    for (unsigned int i = 0; i < options; i++) {
+        string s = files[i].substr(0, files[i].length()-4);
+        glutAddMenuEntry (s.c_str(), i);
+    }
+
+    menu = glutCreateMenu (SelectFromMenu);
+    glutAddSubMenu("Display", submenu);
+
+    glutAddMenuEntry ("Exit", 100);
+
+    return submenu;
+}
+
 int main(int argc, char **argv)
 {
-    Trimesh *t;
-    TrimeshLoader tl;
-    tl.loadOBJ("models/cactus.obj", t);
+    dir = string(argv[1]);
 
-    // string dir = string(argv[1]);
-    // vector<string> files = vector<string>();
-
-    // getdir(dir,files);
-
-    // for (unsigned int i = 0;i < files.size();i++) {
-    //     cout << files[i] << endl;
-    // }
-    
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(500, 500);
     glutCreateWindow("3D Model Viewer");
-    glutReshapeFunc(myReshape);
-    // glutMouseFunc(MouseButton);
-    // glutMotionFunc(MouseMove);
+    glutReshapeFunc(reshape);
+    glutMouseFunc(MouseButton);
+    glutMotionFunc(MouseMove);
     glutDisplayFunc(display);
-    glutIdleFunc(display);
+    // glutIdleFunc(display);
     glEnable(GL_DEPTH_TEST);
     // glutTimerFunc(0, timer, 0);
     BuildPopupMenu ();
