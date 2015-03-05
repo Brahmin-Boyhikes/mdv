@@ -26,6 +26,13 @@
 #define ANGLE_VELOCITY 0.5f
 #define RADIAN 0.0174532925f
 
+enum Mode { POINT, WIREFRAME, SOLID, SHADED };
+
+// Point mode: Just draw the vertices.
+// Wireframe mode: Draw the edges of the mesh.
+// Solid mode: Draw filled triangles.
+// Shaded mode: Basic lighting, see below.
+
 string dir;
 Trimesh t;
 TrimeshLoader tl;
@@ -36,7 +43,40 @@ float viewZ = -3.0f, viewX = 0.0f, viewY = 0.0f, viewR = 3;
 int enableZoom = 0, enableMove = 0;
 float phi = 0, theta = 0;
 
+Mode mode = POINT;
+
+void PointMode() {
+    glBegin(GL_POINTS);
+    for (vector<Vertex>::const_iterator it = t.v_list.begin(); it != t.v_list.end(); ++it){
+        glVertex3f((*it).x, (*it).y, (*it).z);
+    }
+    glEnd();
+}
+
+void WireframeMode() {
+    glBegin(GL_LINES);
+    for (vector<Face>::const_iterator it = t.f_list.begin(); it != t.f_list.end(); ++it){
+        glVertex3f(t.v_list[(*it).u].x, t.v_list[(*it).u].y, t.v_list[(*it).u].z);
+        glVertex3f(t.v_list[(*it).v].x, t.v_list[(*it).v].y, t.v_list[(*it).v].z);
+
+        glVertex3f(t.v_list[(*it).v].x, t.v_list[(*it).v].y, t.v_list[(*it).v].z);
+        glVertex3f(t.v_list[(*it).w].x, t.v_list[(*it).w].y, t.v_list[(*it).w].z);
+
+        glVertex3f(t.v_list[(*it).w].x, t.v_list[(*it).w].y, t.v_list[(*it).w].z);
+        glVertex3f(t.v_list[(*it).u].x, t.v_list[(*it).u].y, t.v_list[(*it).u].z);
+
+
+    }
+    glEnd();
+}
+
 void display() {
+
+
+    viewX = viewR * cosf(phi*RADIAN) * sinf(theta*RADIAN);
+    viewY = viewR * sinf(phi*RADIAN) * sinf(theta*RADIAN);
+    viewZ = viewR * cosf(theta*RADIAN);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
@@ -47,12 +87,13 @@ void display() {
 
     glTranslatef(-(t.maxx + t.minx)/2.0f, -(t.maxy + t.miny)/2.0f, -(t.maxz + t.minz)/2.0f);
 
-    glBegin(GL_POINTS);
-    for (list<Vertex>::const_iterator it = t.v_list.begin(); it != t.v_list.end(); ++it){
-        glVertex3f((*it).x, (*it).y, (*it).z);
-    }
+    switch(mode){
+        case POINT: PointMode(); break;
+        case WIREFRAME: WireframeMode(); break;
+        case SOLID: break;
+        case SHADED: break;
+    } 
 
-    glEnd();
     glutSwapBuffers();
 }
 
@@ -93,13 +134,21 @@ void MouseMove(int x, int y) {
 
     }
 
-    viewX = viewR * cosf(phi*RADIAN) * sinf(theta*RADIAN);
-    viewY = viewR * sinf(phi*RADIAN) * sinf(theta*RADIAN);
-    viewZ = viewR * cosf(theta*RADIAN);
-
     currentX = x;
     currentY = y;
     glutPostRedisplay();
+}
+
+void KeyboardFunc(unsigned char Key, int x, int y)
+{
+    switch(Key)
+    {
+        case '1': mode = POINT; glutPostRedisplay(); break;
+        case '2': mode = WIREFRAME; glutPostRedisplay(); break;
+        case '-': viewR-=ZOOM_VELOCITY; glutPostRedisplay(); break;
+        case '=': viewR+=ZOOM_VELOCITY; glutPostRedisplay(); break;
+
+    }
 }
 
 int getdir (string dir, vector<string> &files)
@@ -198,10 +247,15 @@ int main(int argc, char **argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(500, 500);
     glutCreateWindow("3D Model Viewer");
-    glutReshapeFunc(reshape);
+
+    glutKeyboardFunc(KeyboardFunc);
+
     glutMouseFunc(MouseButton);
     glutMotionFunc(MouseMove);
+
     glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+
     // glutIdleFunc(display);
     glEnable(GL_DEPTH_TEST);
     // glutTimerFunc(0, timer, 0);

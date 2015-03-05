@@ -23,8 +23,8 @@ struct Face
 class Trimesh
 {
     public:
-        list<Vertex> v_list;
-        list<Face> f_list;
+        vector<Vertex> v_list;
+        vector<Face> f_list;
         float minx, miny, minz;
         float maxx, maxy, maxz;
 
