@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include "geom.h"
+#include "BaseNode.h"
 using namespace std;
 
 #define LINE_SIZE    1024
@@ -44,28 +44,30 @@ class TrimeshLoader
 			return ptokp;
 		}
 
-		void loadOBJ(const char * objfile, Trimesh * pmesh)
+		void loadOBJ(GeometryNode * pmesh)
 		{
 			ifstream ifs;
 			char line[LINE_SIZE];
 			char * tok;
-			ifs.open(objfile);
-			while(!ifs.eof())
-			{
-				ifs.getline(line,LINE_SIZE);
-				tok=strtok(line,TOK_SEPS);
-				TokenPair * ptokp=tokenMatch(tok);
-				if(ptokp)
+			ifs.open(pmesh->path);
+			if(!ifs.fail()){
+				while(!ifs.eof())
 				{
-					switch(ptokp->tokID)
+					ifs.getline(line,LINE_SIZE);
+					tok=strtok(line,TOK_SEPS);
+					TokenPair * ptokp=tokenMatch(tok);
+					if(ptokp)
 					{
-						case T_VERT    : processVertex(tok,pmesh); break;
-						case T_FACE    : processFace(tok,pmesh); break;
-						default: processSkip(tok); break;
+						switch(ptokp->tokID)
+						{
+							case T_VERT    : processVertex(tok,pmesh); break;
+							case T_FACE    : processFace(tok,pmesh); break;
+							default: processSkip(tok); break;
+						}
 					}
 				}
+				ifs.close();
 			}
-			ifs.close();
 		}
 
 		int readFloats(char * tok, float * buf, int bufsz)
@@ -88,14 +90,14 @@ class TrimeshLoader
 		{}
 
 
-		void processVertex(char * tok, Trimesh * pmsh)
+		void processVertex(char * tok, GeometryNode * pmsh)
 		{
 			float values[3];
 			int cnt=readFloats(tok,values,3);	
 			if(cnt>=3) pmsh->addVertex(values);
 		}
 
-		bool processFace(char * tok, Trimesh * pmsh)
+		bool processFace(char * tok, GeometryNode * pmsh)
 		{
 			int ids[256]; 
 			int cnt=readInts(tok,ids,256);
