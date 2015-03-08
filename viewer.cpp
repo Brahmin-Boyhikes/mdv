@@ -25,9 +25,6 @@
 #include "BaseNode.h"
 
 
-ObjectNode world;
-TrimeshLoader tl;
-
 // #define ZOOM_VELOCITY 0.2f
 // #define ANGLE_VELOCITY 0.5f
 // #define RADIAN 0.0174532925f
@@ -293,14 +290,75 @@ TrimeshLoader tl;
 //     return submenu;
 // }
 
+ObjectNode world;
+TrimeshLoader tl;
+CameraNode* c;
+GeometryNode* g;
+int px, py, enableOrbit, enableZoom, enablePOI, enableInertia;
+
+void slow(int value) {
+    int i = 0;
+    if(value == 1){
+        i = c->decelerate(1);
+        glutPostRedisplay();
+        glutTimerFunc(10, slow, i);
+    }
+}
+
 void KeyboardFunc(unsigned char Key, int x, int y)
 {
     switch(Key)
     { 
         case 'x': 
-        exit(0);
-        break;
+            exit(0);
+            break;
+        case 'l': 
+            g->toggle();
+            glutPostRedisplay();
+            break;
+        case 'z':
+            enableZoom = enableZoom ? 0 : 1;
+            break;
+        case 'o':
+            enableOrbit = enableOrbit ? 0 : 1;
+            break;
+        case 'p':
+            enablePOI = enablePOI ? 0 : 1;
+            break;
+        case 'i':
+            enableInertia = enableInertia ? 0 : 1;
+            break;
+
     }
+}
+
+void MouseButton(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+        enableOrbit = 1;
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+        slow(1);
+    if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+        // enableZoom = 1;
+    if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+        // enablePOV = 1; // For Right Click 
+    if(state == GLUT_UP)
+        enableOrbit = enableZoom = enablePOI = enableInertia = 0;
+
+    px = x;
+    py = y;
+}
+
+void MouseMove(int x, int y) {
+    if(enableZoom)
+        c->zoom(y - py);
+    if(enableOrbit)
+        c->orbit(px - x, py - y);
+    if(enablePOI)
+        c->poi(px - x, py - y);
+        
+    px = x;
+    py = y;
+    glutPostRedisplay();
 }
 
 void display() {
@@ -331,27 +389,49 @@ int main(int argc, char **argv)
     glutReshapeFunc(reshape);
 
     glutKeyboardFunc(KeyboardFunc);
-// glutMouseFunc(MouseButton);
-// glutMotionFunc(MouseMove);
+    glutMouseFunc(MouseButton);
+    glutMotionFunc(MouseMove);
 
 // BuildPopupMenu ();
 // glutAttachMenu (GLUT_RIGHT_BUTTON);
 
-// glutIdleFunc(display);
-    TransformNode* t = new TransformNode();
-    CameraNode* c = new CameraNode(3.0f);
-    GeometryNode* sphere = new GeometryNode(argv[1]);
+    LightNode* l0 = new LightNode();
+    LightNode* l1 = new LightNode();
 
-    tl.loadOBJ(sphere);
-    sphere->initialize();
-    sphere->setMode(SHADED);
+    TransformNode* t = new TransformNode();
+    g = new GeometryNode(argv[1]);
+
+    tl.loadOBJ(g);
+    g->initialize();
+    g->setMode(SHADED);
+
+    t->addChild(g);
+    t->translate(-g->center.x, -g->center.y, -g->center.z);
+
+    float lightPosition[] = {20.0f, 0.0f, 0.0f, 1.0f};
+    float lightDiffuse[] = {1.0f, 1.0f, 0.0f, 1.0f};
+    float lightAmbient[] = {0.0f, 0.0f, 1.0f, 1.0f};
+    l0->initialize(lightPosition, lightDiffuse, lightAmbient);
+    l0->enable(GL_LIGHT0);
+
+    float lightPosition_1[] = {-20.0f, 0.0f, 0.0f, 1.0f};
+    float lightDiffuse_1[] = {0.149f, 0.694f, 0.988f, 1.0f};
+    float lightAmbient_1[] = {0.801f, 0.306f, 0.022f, 1.0f};
+    l1->initialize(lightPosition_1, lightDiffuse_1, lightAmbient_1);
+    l1->enable(GL_LIGHT1);
+
+    c = new CameraNode(0.25f/g->radius);
 
     world.addChild(c);
+    world.addChild(l0);
+    world.addChild(l1);
     world.addChild(t);
-    t->addChild(sphere);
-    t->translate(-sphere->center.x, -sphere->center.y, -sphere->center.z);
 
     glClearColor(0.0,0.0,0.0,1.0);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_DEPTH_TEST);
+    glutTimerFunc(1000, slow, 0);
+
     glutMainLoop();
 }
 
