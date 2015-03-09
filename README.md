@@ -1,4 +1,5 @@
 # 3D Model Viewer
+---
 
 ## Logistics
 ---
@@ -19,12 +20,13 @@
 ---
 
 **Keyboard shortcuts**  
-**X** - Exit  
-**l** - Toggle between face and vertex normal  
-**I** - Toggle inertia  
-**D** - Darker lighting  
-**B** - Brigher lighting  
-
+**x** - Exit  
+**i** - Toggle between face and vertex normal  
+**I** - Toggle inertia
+**f** - Toggle drawing of face normal
+**v** - Toggle drawing of vertex normal
+**d** - Darker lighting  
+**b** - Brigher lighting  
 
 ## Features
 ---

@@ -57,15 +57,14 @@ void KeyboardFunc(unsigned char Key, int x, int y)
             l0->updateDiffuse(-0.01, -0.01, -0.01);
             glutPostRedisplay();
             break;
-        // case 'z':
-        //     enableZoom = enableZoom ? 0 : 1;
-        //     break;
-        // case 'o':
-        //     enableOrbit = enableOrbit ? 0 : 1;
-        //     break;
-        // case 'p':
-        //     enablePOI = enablePOI ? 0 : 1;
-        //     break;
+        case 'f': 
+            g->drawFaceNormal();
+            glutPostRedisplay();
+            break;
+        case 'v': 
+            g->drawVertexNormal();
+            glutPostRedisplay();
+            break;
         case 'i':
             enableInertia = enableInertia ? 0 : 1;
             break;

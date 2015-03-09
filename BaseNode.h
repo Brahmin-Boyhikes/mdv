@@ -121,6 +121,8 @@ public:
         calculateCenter();
         calculateNormal();
         normal_toggle = 0;
+        face_toggle = 0;
+        vertex_toggle = 0;
     }
 
     void update()
@@ -132,6 +134,30 @@ public:
             case SOLID: SolidMode(); break;
             case SHADED: ShadedMode(); break;
         }
+
+        glBegin(GL_LINES);
+            if(face_toggle){
+                for (vector<Face>::const_iterator it = f_list.begin(); it != f_list.end(); ++it){
+                    float x = (v_list[(*it).u].x + v_list[(*it).v].x + v_list[(*it).w].x) / 3.0f;
+                    float y = (v_list[(*it).u].y + v_list[(*it).v].y + v_list[(*it).w].y) / 3.0f;
+                    float z = (v_list[(*it).u].z + v_list[(*it).v].z + v_list[(*it).w].z) / 3.0f;
+
+                    glVertex3f(x, y, z);
+                    glVertex3f(x + (*it).normal.vx, y + (*it).normal.vy, z + (*it).normal.vz);
+
+                }
+            }
+            if(vertex_toggle){
+                for (vector<Vertex>::const_iterator it = v_list.begin(); it != v_list.end(); ++it){
+
+                    glVertex3f((*it).x, (*it).y, (*it).z);
+                    glVertex3f((*it).x + (*it).normal.vx,
+                        (*it).y + (*it).normal.vy,
+                        (*it).z + (*it).normal.vz);
+                }
+            }
+        glEnd();
+
     }
 
     void addVertex(float data[])
@@ -152,6 +178,14 @@ public:
 
     void toggle(){
         normal_toggle = normal_toggle ? 0 : 1;
+    }
+
+    void drawFaceNormal(){
+        face_toggle = face_toggle ? 0 : 1;
+    }
+
+    void drawVertexNormal(){
+        vertex_toggle = vertex_toggle ? 0 : 1;
     }
 
     void calculateCenter(){
@@ -246,6 +280,8 @@ private:
     vector<Face> f_list;
     Mode mode;
     int normal_toggle;
+    int face_toggle;
+    int vertex_toggle;
 
     void PointMode() {
         glBegin(GL_POINTS);
