@@ -34,5 +34,5 @@
 **Camera inertia**  
 Some users find it more natural if the camera keeps rotating around an object after they've released the mouse, as if they had spun a globe. The rotation slow down gradually over time and eventually stops spinning.
 
-**Lighting control**
+**Lighting control**  
 Users are able to edit lights on the scene, which affect shaded mode rendering. (Brighter and Darker)
