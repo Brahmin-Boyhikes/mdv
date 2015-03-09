@@ -1,10 +1,14 @@
+/* Name: Alan Ma */
+/* UTEID: am65355 */
+/* CSID: ama */
+
 #ifndef __BASE__
 #define __BASE__
 
 #include <list>
-#include <math.h>
 #include <cmath>
 #include <limits>
+#include <stdlib.h> 
 
 #include "loader.h"
 using namespace std;
@@ -29,10 +33,6 @@ struct Vector
     float vx;
     float vy;
     float vz;
-
-    // void print(){
-    //     // cout << vx << " " << vy << " " << vz << endl;
-    // }
 };
 
 struct Vertex
@@ -103,8 +103,6 @@ public:
 
     void update()
     {
-        // cout << "entering object update" << endl;
-
         BaseNode::update();
     }
 };
@@ -127,8 +125,6 @@ public:
 
     void update()
     {
-        // cout << "entering Geometry update" << endl;
-
         switch(mode)
         {
             case POINT: PointMode(); break;
@@ -336,8 +332,6 @@ public:
 
     void update()
     {
-        // cout << "entering transform update" << endl;
-
         glPushMatrix();
         glTranslatef(translate_vector[0], translate_vector[1], translate_vector[2]);
         glScalef(scale_vector[0], scale_vector[1], scale_vector[2]);
@@ -363,14 +357,9 @@ public:
 
     void update()
     {
-        // cout << "entering camera node" << endl;
         calculateUpVector();
         gluLookAt(eye[0], eye[1], eye[2], center[0], center[1], center[2], up[0], up[1], up[2]);
         glScalef(zoom_scale, zoom_scale, zoom_scale);
-        // glPushAttrib(GL_CURRENT_BIT);
-        // glColor4f(1,0,0,1);
-        // glutSolidCube(0.1f);
-        // glPopAttrib();
     }
 
     void reset(float s)
@@ -411,8 +400,6 @@ public:
             dp -= (dp / abs(dp));
 
         orbit(dt, dp);
-
-        // cout << dt << " " << dp << endl;
 
         return !(dt < 1 && dt > -1 && dp < 1 && dp > -1);
     }
@@ -471,8 +458,6 @@ public:
 
     void update()
     {
-        // cout << "enter lighting " << endl;
-        // cout << diffuse[0] << " " << diffuse[1] << " " << diffuse[2] << endl;
         glLightfv(light, GL_POSITION, position);
         glLightfv(light, GL_DIFFUSE, diffuse);
         glLightfv(light, GL_AMBIENT, ambient);
@@ -491,6 +476,27 @@ public:
             diffuse[i] = d[i];
         for( int i = 0; i < 3; i++ )
             ambient[i] = a[i];
+    }
+
+    void updateDiffuse(float r, float g, float b){
+        diffuse[0] += r;
+        diffuse[1] += g;
+        diffuse[2] += b;
+
+        if(diffuse[0] <= 0.0f)
+            diffuse[0] = 0.0f;
+        if(diffuse[0] >= 1.0f)
+            diffuse[0] = 1.0f;
+
+        if(diffuse[1] <= 0.0f)
+            diffuse[1] = 0.0f;
+        if(diffuse[1] >= 1.0f)
+            diffuse[1] = 1.0f;
+
+        if(diffuse[2] <= 0.0f)
+            diffuse[2] = 0.0f;
+        if(diffuse[2] >= 1.0f)
+            diffuse[2] = 1.0f;
     }
 
 private:
