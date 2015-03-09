@@ -19,11 +19,11 @@
 ---
 
 **Keyboard shortcuts**  
-**X** - Exit
-**l** - Toggle between face and vertex normal 
-**I** - Toggle inertia
-**D** - Darker lighting
-**B** - Brigher lighting
+**X** - Exit  
+**l** - Toggle between face and vertex normal  
+**I** - Toggle inertia  
+**D** - Darker lighting  
+**B** - Brigher lighting  
 
 
 ## Features
