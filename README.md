@@ -1,13 +1,9 @@
 # 3D Model Viewer
-## Logistics
-**Name** Alan Ma  
-**UTEID** am65355  
-**UTCSID** ama
+A tool to view models that are in OBJ format.
 
-## Instructions 
+## Setup 
 **Compile** by running
 
-	$ make clean
 	$ make
 	$ ./viewer path/of/model/file
 
