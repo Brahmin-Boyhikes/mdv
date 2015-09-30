@@ -23,3 +23,6 @@ Some users find it more natural if the camera keeps rotating around an object af
 
 **Lighting control**  
 Users are able to edit lights on the scene, which affect shaded mode rendering. (Brighter and Darker)
+
+##Licence
+MIT
